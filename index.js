@@ -65,27 +65,29 @@ Handlebars.registerHelper('plus1', function(value, options) {
 
 function Server (opts) {
   if (!(this instanceof Server)) return new Server(opts);
+
   opts || (opts = {});
   var self = this;
-
+  this.site = opts.site;
   var envFilePath = (opts.dir || process.cwd()) + '/.env';
 
-  if (!fs.existsSync(envFilePath)) {
-    fs.writeFileSync(envFilePath, '');
+  if (fs.existsSync(envFilePath)) {
+    var envFile = fs.readFileSync(envFilePath);
+    var secrets = dotenv.parse(envFile);
   }
-
-  var envFile = fs.readFileSync(envFilePath);
-  var secrets = dotenv.parse(envFile);
-
-  this.site = opts.site;
-  
+  else {
+    var secrets = {
+      SENDGRID_USER: process.env.FLATSHEET_SENDGRID_USER,
+      SENDGRID_PASS: process.env.FLATSHEET_SENDGRID_PASS
+    }
+  }
 
   /*
   * Set path for static files
   */
 
   this.staticFiles = opts.staticFiles || __dirname + '/public';
-  
+
   mkdirp(this.staticFiles, function (err) {
     if (err) console.error(err)
   });
